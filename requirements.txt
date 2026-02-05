@@ -1,0 +1,30 @@
+# MST-GIS Requirements
+# Radio Propagation Prediction using ITU-R P.1812-6
+#
+# Install with: pip install -r requirements.txt
+
+# Core numerical and data processing
+numpy>=1.21.0
+geojson>=2.5.0
+psutil>=5.8.0
+matplotlib>=3.4.0
+
+# GIS and geospatial
+geopandas>=0.9.0
+pandas>=1.3.0
+rasterio>=1.2.0
+shapely>=1.7.0
+
+# Data acquisition
+requests>=2.26.0
+elevation>=1.1.0
+certifi>=2024.0.0
+
+# Development and testing
+jupyter>=1.0.0
+jupyterlab>=3.0.0
+ipython>=7.0.0
+ipykernel>=6.0.0
+
+# Radio propagation model (local installation)
+# Note: Install separately with: pip install ./github_Py1812/Py1812
