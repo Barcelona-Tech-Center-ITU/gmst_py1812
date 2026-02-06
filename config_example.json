@@ -1,0 +1,37 @@
+{
+  "TRANSMITTER": {
+    "tx_id": "TX_0001",
+    "longitude": -13.40694,
+    "latitude": 9.345,
+    "antenna_height_tx": 57,
+    "antenna_height_rx": 10
+  },
+  "P1812": {
+    "frequency_ghz": 0.9,
+    "time_percentage": 50,
+    "polarization": 1
+  },
+  "RECEIVER_GENERATION": {
+    "max_distance_km": 11,
+    "azimuth_step": 10,
+    "distance_step": 0.03,
+    "sampling_resolution": 30
+  },
+  "SENTINEL_HUB": {
+    "buffer_m": 11000,
+    "chip_px": 734,
+    "year": 2020
+  },
+  "LCM10_TO_CT": {
+    "100": 1, "80": 2, "30": 2, "40": 2, "70": 2, "110": 2, "254": 2,
+    "20": 3, "50": 3,
+    "10": 4, "60": 4, "90": 4
+  },
+  "CT_TO_R": {
+    "1": 0,
+    "2": 0,
+    "3": 10,
+    "4": 15,
+    "5": 20
+  }
+}
