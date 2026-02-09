@@ -29,4 +29,4 @@ ipython>=7.0.0
 ipykernel>=6.0.0
 
 # Radio propagation model (local installation)
-# Note: Install separately with: pip install ./github_Py1812/Py1812
+# Note: Install separately with: pip install -e ./Py1812_lib

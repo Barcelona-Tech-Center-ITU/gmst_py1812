@@ -17,7 +17,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # Install Py1812 from local source (required)
-pip install -e ./github_Py1812/Py1812
+pip install -e ./Py1812_lib
 
 # Run main batch processor (processes profiles from data/input/profiles/, outputs to data/output/geojson/)
 python scripts/run_batch_processor.py
@@ -41,7 +41,7 @@ python scripts/generate_receiver_points.py <lat> <lon> <num_points> --scale <met
 
 ```bash
 # Run P1812 validation tests (requires validation_profiles/ data)
-cd github_Py1812/Py1812/tests
+cd Py1812_lib/tests
 python validateP1812.py
 ```
 
@@ -109,8 +109,8 @@ Columns: frequency, time_percentage, distances[], heights[], R[], Ct[], zone[], 
 The Py1812 library requires ITU digital products (not redistributable). Before first use:
 
 1. Download `DN50.TXT` and `N050.TXT` from ITU-R P.1812 recommendation
-2. Place in `github_Py1812/Py1812/src/Py1812/maps/`
-3. Run: `python github_Py1812/Py1812/src/Py1812/initiate_digital_maps.py`
+2. Place in `Py1812_lib/src/Py1812/maps/`
+3. Run: `python Py1812_lib/src/Py1812/initiate_digital_maps.py`
 4. This generates `P1812.npz` required by the model
 
 ## P1812.bt_loss() Key Parameters
