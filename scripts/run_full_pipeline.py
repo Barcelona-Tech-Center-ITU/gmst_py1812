@@ -14,7 +14,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mst_gis.pipeline.orchestration import run_pipeline
+from pipeline.orchestration import run_pipeline
 
 
 def main():
