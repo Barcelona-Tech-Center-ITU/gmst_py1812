@@ -176,6 +176,32 @@ class PipelineOrchestrator:
             except ImportError:
                 pass
         
+        # Check if landcover is already cached
+        from mst_gis.pipeline.data_preparation import LandCoverProcessor
+        processor = LandCoverProcessor(landcover_cache_dir)
+        is_cached = processor.has_cached(
+            lat=transmitter_config['latitude'],
+            lon=transmitter_config['longitude'],
+            year=sentinel_config['year'],
+            buffer_m=sentinel_config['buffer_m'],
+            chip_px=sentinel_config['chip_px']
+        )
+        
+        if is_cached:
+            # Use cached data
+            lc_path = processor.get_cache_path(
+                lat=transmitter_config['latitude'],
+                lon=transmitter_config['longitude'],
+                year=sentinel_config['year'],
+                buffer_m=sentinel_config['buffer_m'],
+                chip_px=sentinel_config['chip_px']
+            )
+            print_success(f"Using cached landcover: {lc_path.name}")
+            self.phase1_landcover_path = lc_path
+            self.state['phase1_complete'] = True
+            return lc_path
+        
+        # Not cached - try to download
         try:
             lc_path = prepare_landcover(
                 lat=transmitter_config['latitude'],
@@ -199,8 +225,12 @@ class PipelineOrchestrator:
             return lc_path
         
         except Exception as e:
-            print_warning(f"Phase 1 failed: {e}")
-            raise
+            print_warning(f"Phase 1 failed: {str(e)[:200]}")
+            print_warning("Continuing with Phase 3 fallback (SRTM elevation only)")
+            # Don't raise - let Phase 3 handle missing landcover gracefully
+            self.phase1_landcover_path = None
+            self.state['phase1_complete'] = False  # Mark as not complete but don't fail
+            return None
     
     def run_phase2_generation(self) -> gpd.GeoDataFrame:
         """

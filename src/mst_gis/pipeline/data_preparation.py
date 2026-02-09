@@ -56,7 +56,7 @@ class SentinelHubClient:
             Access token string
             
         Raises:
-            requests.HTTPError: If token request fails
+            RuntimeError: If token request fails with details
         """
         # Reuse token if still valid
         if self.token and self.token_expiry and time.time() < self.token_expiry:
@@ -67,26 +67,40 @@ class SentinelHubClient:
         if self.verbose:
             print(f"Requesting new token from {self.token_url}")
         
-        response = requests.post(
-            self.token_url,
-            data={
-                "grant_type": "client_credentials",
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
-            },
-            timeout=60,
-        )
+        try:
+            response = requests.post(
+                self.token_url,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret,
+                },
+                timeout=60,
+            )
+            
+            if response.status_code != 200:
+                error_msg = response.text[:500]
+                raise RuntimeError(
+                    f"Sentinel Hub authentication failed ({response.status_code}). "
+                    f"Check your credentials in config_sentinel_hub.py. "
+                    f"Error: {error_msg}"
+                )
+            
+            data = response.json()
+            self.token = data["access_token"]
+            self.token_expiry = time.time() + data.get("expires_in", 3600) - 60
+            
+            if self.verbose:
+                print(f"✓ Got token (expires in {data.get('expires_in', 3600)}s)")
+            
+            return self.token
         
-        response.raise_for_status()
-        
-        data = response.json()
-        self.token = data["access_token"]
-        self.token_expiry = time.time() + data.get("expires_in", 3600) - 60  # Refresh 60s before expiry
-        
-        if self.verbose:
-            print(f"✓ Got token (expires in {data.get('expires_in', 3600)}s)")
-        
-        return self.token
+        except requests.RequestException as e:
+            raise RuntimeError(
+                f"Failed to connect to Sentinel Hub authentication service. "
+                f"Check your internet connection and credentials. "
+                f"Details: {str(e)[:200]}"
+            )
     
     def get_landcover(self, lat: float, lon: float, collection_id: str,
                      year: int = 2020, buffer_m: float = 11000, chip_px: int = 734) -> np.ndarray:
@@ -162,19 +176,31 @@ class SentinelHubClient:
             "Content-Type": "application/json",
         }
         
-        response = requests.post(
-            self.process_url,
-            json=request_body,
-            headers=headers,
-            timeout=300,
-        )
+        try:
+            response = requests.post(
+                self.process_url,
+                json=request_body,
+                headers=headers,
+                timeout=300,
+            )
+            
+            if response.status_code != 200:
+                error_text = response.text[:500]
+                raise RuntimeError(
+                    f"Sentinel Hub processing API error ({response.status_code}). "
+                    f"Error: {error_text}"
+                )
+            
+            # Parse GeoTIFF from response
+            with rasterio.MemoryFile(response.content) as memfile:
+                with memfile.open() as src:
+                    array = src.read(1)
         
-        response.raise_for_status()
-        
-        # Parse GeoTIFF from response
-        with rasterio.MemoryFile(response.content) as memfile:
-            with memfile.open() as src:
-                array = src.read(1)
+        except requests.RequestException as e:
+            raise RuntimeError(
+                f"Failed to fetch landcover data from Sentinel Hub. "
+                f"Details: {str(e)[:200]}"
+            )
         
         if self.verbose:
             print(f"✓ Got landcover array: {array.shape}, min={array.min()}, max={array.max()}")
