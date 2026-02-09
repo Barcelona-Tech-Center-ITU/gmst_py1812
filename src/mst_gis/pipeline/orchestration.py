@@ -227,7 +227,7 @@ class PipelineOrchestrator:
             receivers_gdf = generate_receiver_grid(
                 tx=transmitter,
                 max_distance_km=rx_config['max_distance_km'],
-                distance_step_km=rx_config['distance_step'],
+                sampling_resolution_m=rx_config['sampling_resolution'],
                 num_azimuths=num_azimuths,
                 include_tx_point=True,
             )
@@ -335,6 +335,7 @@ class PipelineOrchestrator:
             polarization=self.config['P1812']['polarization'],
             htg=self.config['TRANSMITTER']['antenna_height_tx'],
             hrg=self.config['TRANSMITTER']['antenna_height_rx'],
+            distance_step_km=self.config['RECEIVER_GENERATION']['distance_step'],
             verbose=True,
         )
         

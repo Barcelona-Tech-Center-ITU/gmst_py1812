@@ -60,6 +60,7 @@ class ProfileFormatter:
         polarization: int,
         htg: float,
         hrg: float,
+        distance_step_km: float = 1.0,
     ) -> List[Dict[str, Any]]:
         """
         Format receiver points into profiles per distance ring per azimuth.
@@ -68,8 +69,7 @@ class ProfileFormatter:
         extends from 0 km (TX) to the specified ring distance, containing all
         points along that azimuth up to that distance.
         
-        This matches the notebook approach: for each distance ring, for each azimuth,
-        create a profile with all points from 0 to that ring endpoint.
+        Distance rings are created at intervals specified by distance_step_km.
         
         Args:
             frequency_ghz: Frequency in GHz (0.03-6)
@@ -77,6 +77,7 @@ class ProfileFormatter:
             polarization: Polarization (1=horizontal, 2=vertical)
             htg: TX antenna height above ground (m)
             hrg: RX antenna height above ground (m)
+            distance_step_km: Distance ring interval in km (default 1.0 km)
             
         Returns:
             List of profile dictionaries with P.1812 format
@@ -102,10 +103,11 @@ class ProfileFormatter:
         
         profiles = []
         
-        # Get distance rings and azimuths
-        distance_rings = sorted(set([round(d) for d in self.receivers_gdf['distance_km'].dropna().unique() if d > 0]))
+        # Generate distance rings at specified intervals
+        max_distance = self.receivers_gdf['distance_km'].max()
+        num_rings = int(max_distance / distance_step_km)
+        distance_rings = [i * distance_step_km for i in range(1, num_rings + 1)]
         azimuths = sorted(self.receivers_gdf['azimuth_deg'].dropna().unique())
-        
         # Create one profile per (distance_ring, azimuth) pair
         for ring_km in distance_rings:
             for azimuth in azimuths:
@@ -235,6 +237,7 @@ def format_and_export_profiles(
     polarization: int,
     htg: float,
     hrg: float,
+    distance_step_km: float = 1.0,
     verbose: bool = True,
 ) -> Tuple[pd.DataFrame, Path]:
     """
@@ -252,6 +255,7 @@ def format_and_export_profiles(
         polarization: Polarization (1=horizontal, 2=vertical)
         htg: TX antenna height above ground (m)
         hrg: RX antenna height above ground (m)
+        distance_step_km: Distance ring interval in km
         verbose: Print progress updates
         
     Returns:
@@ -275,6 +279,7 @@ def format_and_export_profiles(
             polarization,
             htg,
             hrg,
+            distance_step_km=distance_step_km,
         )
     
     if verbose:

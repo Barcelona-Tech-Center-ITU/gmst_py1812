@@ -13,7 +13,7 @@
   },
   "RECEIVER_GENERATION": {
     "max_distance_km": 11,
-    "azimuth_step": 10,
+    "azimuth_step": 5,
     "distance_step": 0.03,
     "sampling_resolution": 30
   },

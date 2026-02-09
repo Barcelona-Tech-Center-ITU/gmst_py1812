@@ -196,7 +196,7 @@ def generate_azimuth_array(
 def generate_receiver_grid(
     tx: Transmitter,
     max_distance_km: float = 11.0,
-    distance_step_km: float = 0.03,
+    sampling_resolution_m: float = 30.0,
     num_azimuths: int = 36,
     include_tx_point: bool = True,
 ) -> gpd.GeoDataFrame:
@@ -209,7 +209,7 @@ def generate_receiver_grid(
     Args:
         tx: Transmitter specification
         max_distance_km: Maximum distance in km
-        distance_step_km: Distance step in km
+        sampling_resolution_m: Point spacing in meters along each azimuth
         num_azimuths: Number of azimuth angles
         include_tx_point: Include transmitter as rx_id=0
         
@@ -219,10 +219,13 @@ def generate_receiver_grid(
     Raises:
         ValidationError: If inputs are invalid
     """
+    # Convert sampling resolution from meters to km
+    sampling_resolution_km = sampling_resolution_m / 1000.0
+    
     distances = generate_distance_array(
         min_km=0.0,
         max_km=max_distance_km,
-        step_km=distance_step_km,
+        step_km=sampling_resolution_km,
     )
     
     azimuths = generate_azimuth_array(num_azimuths=num_azimuths)
