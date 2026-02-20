@@ -141,7 +141,7 @@ gmst_py1812/
   "RECEIVER_GENERATION": {
     "max_distance_km": 11.0,
     "azimuth_step": 10,
-    "distance_step": 0.03,
+    "distance_step": 1,
     "sampling_resolution": 30
   },
   "SENTINEL_HUB": {
@@ -499,7 +499,7 @@ print(enriched_gdf[['distance_km', 'azimuth_deg', 'elevation_m', 'landcover_code
   "RECEIVER_GENERATION": {
     "max_distance_km": 11.0,
     "azimuth_step": 10.0,
-    "distance_step": 0.03,
+    "distance_step": 1,
     "sampling_resolution": 30.0
   },
   "SENTINEL_HUB": {
@@ -529,8 +529,8 @@ print(enriched_gdf[['distance_km', 'azimuth_deg', 'elevation_m', 'landcover_code
 | `polarization` | P1812 | int | 1=horizontal, 2=vertical |
 | `max_distance_km` | RECEIVER_GENERATION | float | Maximum distance to receivers (km) |
 | `azimuth_step` | RECEIVER_GENERATION | float | Azimuth spacing (degrees, e.g., 10 = 36 azimuths) |
-| `distance_step` | RECEIVER_GENERATION | float | Distance sampling in profile extraction (km) |
-| `sampling_resolution` | RECEIVER_GENERATION | float | Distance between receiver rings (m) |
+| `distance_step` | RECEIVER_GENERATION | float | Distance between receiver rings (km) |
+| `sampling_resolution` | RECEIVER_GENERATION | float | Distance sampling in profile extraction (m) |
 | `client_id` | SENTINEL_HUB | str | Sentinel Hub OAuth client ID |
 | `client_secret` | SENTINEL_HUB | str | Sentinel Hub OAuth client secret |
 | `collection_id` | SENTINEL_HUB | str | BYOC collection ID for landcover |
@@ -576,8 +576,8 @@ Lb, Ep = Py1812.P1812.bt_loss(f, p, d, h, R, Ct, zone, htg, hrg, pol)
 | `p` | float | Time percentage (%), valid range 1-50 |
 | `d` | ndarray | Distance profile (km), length > 4 |
 | `h` | ndarray | Height profile (m above sea level) |
-| `R` | ndarray | Land cover resistance (dB/km) |
-| `Ct` | ndarray | Clutter transmission loss (dB/m) |
+| `R` | ndarray | Representative clutter heights (m) |
+| `Ct` | ndarray | Array of representative clutter types.  |
 | `zone` | ndarray | Radio-climatic zones: 1=Sea, 3=Coastal, 4=Inland |
 | `htg` | float | TX antenna height above ground (m) |
 | `hrg` | float | RX antenna height above ground (m) |
@@ -598,10 +598,11 @@ import numpy as np
 
 # Define terrain profile
 frequencies = np.array([0.8])  # 0.8 GHz
-d = np.array([0, 2, 4, 6, 8, 10, 11])  # km
-h = np.array([100, 150, 200, 180, 160, 140, 120])  # m asl
-R = np.array([0, 5, 5, 5, 5, 5, 5])  # dB/km land cover resistance
-Ct = np.array([0, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01])  # dB/m clutter loss
+d = np.array([0.0, 0.03, 0.06, 0.09, 0.12])  # km
+h = np.array([10, 15, 14, 16, 14])  # m asl
+R = np.array([0, 15, 15, 15, 15])  # m, based on clutter type
+Ct = np.array([2, 4, 4, 4, 4])  # type of clutter
+zone = np.array([1, 3, 4, 4, 4]),  # Sea, coastal, inland
 
 Lb, Ep = Py1812.P1812.bt_loss(
     f=0.8,
@@ -610,7 +611,7 @@ Lb, Ep = Py1812.P1812.bt_loss(
     h=h,
     R=R,
     Ct=Ct,
-    zone=np.array([1, 3, 4, 4, 4, 4, 4]),  # Sea, coastal, inland
+    zone=zone,
     htg=50,  # TX height above ground
     hrg=1.5,  # RX height above ground
     pol=1  # Horizontal polarization
@@ -626,19 +627,20 @@ print(f"Electric field: {Ep:.2f} dBμV/m")
 
 The pipeline uses ESA WorldCover 10m resolution classes mapped to P.1812 resistance (R) and clutter transmission loss (Ct):
 
-| Class | Description | R (dB/km) | Ct (dB/m) |
-|-------|-------------|-----------|-----------|
-| 10 | Trees | 8 | 0.02 |
-| 20 | Shrubland | 5 | 0.01 |
-| 30 | Grassland | 2 | 0.005 |
-| 40 | Cropland | 3 | 0.008 |
-| 50 | Built-up | 5 | 0.01 |
-| 60 | Barren land | 1 | 0.002 |
-| 70 | Snow/Ice | 0 | 0 |
-| 80 | Water bodies | 0 | 0 |
-| 90 | Herbaceous wetland | 2 | 0.005 |
-| 95 | Mangrove | 8 | 0.02 |
-| 254 | Unknown/Nodata | 0 | 0 |
+| Class | Description            | Ct | R (m) |
+|-------|------------------------|----|-------|
+| 10    | Tree cover             | 4  | 15    |
+| 20    | Shrubland              | 3  | 10    |
+| 30    | Grassland              | 2  | 0     |
+| 40    | Cropland               | 2  | 0     |
+| 50    | Herbaceous wetland     | 3  | 10    |
+| 60    | Mangroves              | 4  | 15    |
+| 70    | Moss / Lichen          | 2  | 0     |
+| 80    | Bare / Sparse          | 2  | 0     |
+| 90    | Built-up               | 4  | 15    |
+| 100   | Water                  | 1  | 0     |
+| 110   | Snow / Ice             | 2  | 0     |
+| 254   | No data                | 2  | 0     |
 
 ---
 

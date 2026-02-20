@@ -101,7 +101,7 @@ Edit `config.json` (copy from `config_example.json`):
   "RECEIVER_GENERATION": {
     "max_distance_km": 11.0,
     "azimuth_step": 10,
-    "distance_step": 0.03,
+    "distance_step": 1,
     "sampling_resolution": 30
   },
   "SENTINEL_HUB": {
@@ -235,7 +235,7 @@ transmitter = Transmitter(
 receivers_gdf = generate_receiver_grid(
     tx=transmitter,
     max_distance_km=11.0,
-    distance_step_km=0.03,
+    distance_step_km=1,
     num_azimuths=36
 )
 
@@ -278,7 +278,7 @@ enriched_gdf = extract_data_for_receivers(
     },
     "RECEIVER_GENERATION": {
         "max_distance_km": 11.0,
-        "distance_step_km": 0.03,      # Creates ~367 distances
+        "distance_step_km": 1,      # Creates ~367 distances
         "num_azimuths": 36,            # Creates 36 profiles
     },
     "SENTINEL_HUB": {
@@ -287,15 +287,30 @@ enriched_gdf = extract_data_for_receivers(
         "buffer_m": 11000,             # 11 km buffer around TX
         "year": 2020,
     },
-    "LCM10_TO_CT": {
-        "0": 4,    # Unclassified → Inland
-        "20": 5,   # Shrubland → Inland
-        # ... more mappings
+   "LCM10_TO_CT": {
+        "100": 1,   # Water → Water
+
+        "80": 2,    # Bare / sparse → Open/rural
+        "30": 2,    # Grassland → Open/rural
+        "40": 2,    # Cropland → Open/rural
+        "70": 2,    # Moss / lichen → Open/rural
+        "110": 2,   # Snow / ice → Open/rural
+        "254": 2,   # No data → Open/rural
+
+        "20": 3,    # Shrubland → Suburban
+        "50": 3,    # Herbaceous wetland → Suburban
+
+        "10": 4,    # Tree cover → Urban / trees / forest
+        "60": 4,    # Mangroves → Urban / trees / forest
+        "90": 4     # Built-up → Urban / trees / forest
     },
+
     "CT_TO_R": {
-        "1": 15,   # Sea
-        "3": 75,   # Coastal
-        "4": 90,   # Inland
+        "1": 0,     # Water
+        "2": 0,     # Open/rural
+        "3": 10,    # Suburban
+        "4": 15,    # Urban / trees / forest
+        "5": 20     # Dense urban
     }
 }
 ```
@@ -379,10 +394,10 @@ Semicolon-delimited with columns:
 - `f` - Frequency (GHz)
 - `p` - Time percentage
 - `d` - Distance profile array (km)
-- `h` - Height profile array (m asl)
-- `R` - Resistance array (ohms)
+- `h` - Height profile array (m)
+- `R` - Representative clutter heights
 - `Ct` - Land cover category array
-- `zone` - Zone ID array
+- `zone` - Radio-climatic zone types
 - `htg`, `hrg` - TX/RX antenna heights (m)
 - `pol` - Polarization (1 or 2)
 - `phi_t`, `phi_r` - TX/RX latitudes
@@ -391,7 +406,7 @@ Semicolon-delimited with columns:
 
 Example row:
 ```
-0.9;50;0.03,0.06,0.09,...;8,9,10,...;15,15,15,...;5,5,5,...;4,4,4,...;57;10;1;9.345;9.345;-13.407;-13.407;0
+0.9;50;0.03,0.06,0.09,...;8,9,10,...;15,15,15,...;4,4,4,...;4,4,4,...;57;10;1;9.345;9.345;-13.407;-13.407;0
 ```
 
 ### GeoJSON Output (Optional)
@@ -438,9 +453,9 @@ chmod -R u+w data/
 ```
 
 ### Out of Memory with Large Rasters
-**Solution:** Reduce buffer size in config:
+**Solution:** Reduce buffer size and chip_px in config:
 ```json
-{"SENTINEL_HUB": {"buffer_m": 5500}}
+{"SENTINEL_HUB": {"buffer_m": 5500}, {"chip_px": 366}}
 ```
 
 ## Project Status
